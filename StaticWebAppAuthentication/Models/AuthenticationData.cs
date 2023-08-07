@@ -1,4 +1,4 @@
-﻿using System;
+﻿
 namespace StaticWebAppAuthentication.Models
 {
 	public class AuthenticationData
