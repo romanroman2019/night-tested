@@ -10,7 +10,8 @@
 }
     </div>
     <div>
-        @((MarkupString)Markdown.ToHtml(Summary.BlogPostMarkdown))
+        @((MarkupString)Markdown.ToHtml(Summary.BlogPostMarkdown,
+        new MarkdownPipelineBuilder().UseAdvancedExtensions().Build()))
     </div>
 
 </article>
@@ -19,6 +20,7 @@
 
     [Parameter]
     public BlogPost Summary { get; set; }
+
 
     void Navigate() => navigationManager
         .NavigateTo($"/blogposts/{Summary.Author}/{Summary.Id}");
