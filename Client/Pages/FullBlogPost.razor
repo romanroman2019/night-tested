@@ -12,13 +12,13 @@
 {
         <AuthorizeView Roles="admin">
             <Authorized>
-                <a href="blogpost/@blogPost.Author/@blogPost.Id/edit">Edit</a>
+                <a href="blogposts/@blogPost.Author/@blogPost.Id/edit">Edit</a>
                 <a href="javascript:;" @onclick="Delete">Delete</a>
             </Authorized>
         </AuthorizeView>
         <article>
             <h1>@blogPost.Title</h1>
-            <h2>@blogPost.Author</h2>
+            <h3>@blogPost.Author</h3>
             <div>@blogPost.PublishedDate</div>
             <div>
                 @foreach(var tag in blogPost.Tags)
