@@ -5,7 +5,7 @@ using StaticWebAppAuthentication.Models;
 
 namespace StaticWebAppAuthentication.Api
 {
-	public class StaticWebAppAuthorization
+	public class StaticWebAppApiAuthorization
 	{
 		public static ClientPrincipal ParseHeaderForClientPrincipal(IHeaderDictionary headers)
 		{

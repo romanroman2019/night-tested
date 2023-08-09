@@ -1,5 +1,6 @@
 ﻿@page "/blogposts/{author}/{id:guid}"
 @inject BlogPostService service
+@inject NavigationManager navigationManager
 @using Models
 
 <h3>Blog Post</h3>
@@ -9,6 +10,12 @@
     }
     else
 {
+        <AuthorizeView Roles="admin">
+            <Authorized>
+                <a href="blogpost/@blogPost.Author/@blogPost.Id/edit">Edit</a>
+                <a href="javascript:;" @onclick="Delete">Delete</a>
+            </Authorized>
+        </AuthorizeView>
         <article>
             <h1>@blogPost.Title</h1>
             <h2>@blogPost.Author</h2>
@@ -35,8 +42,14 @@
     public string Author { get; set; }
 
     protected override async Task OnParametersSetAsync()
-{
+    {
         blogPost = await service.GetBlogPost(Id, Author);
+    }
+
+    private async void Delete()
+{
+        await service.Delete(blogPost!.Id, blogPost!.Author);
+        navigationManager.NavigateTo("blogposts");
 }
 }
 
