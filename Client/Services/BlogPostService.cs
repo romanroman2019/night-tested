@@ -1,110 +1,101 @@
 ﻿using Microsoft.AspNetCore.Components;
 using System.Net.Http.Json;
+using Models;
 using System.Text;
 using System.Text.Json;
-using Models;
 
-
-namespace Client.Services
+namespace Client.Services;
+public class BlogPostService
 {
-	public class BlogPostService
-	{
-		private readonly HttpClient http;
-		private readonly NavigationManager navigationManager;
-		private List<BlogPost> blogPostCache = new();
-		private readonly BlogPostSummaryService blogPostSummaryService;
+    private readonly HttpClient http;
+    private readonly NavigationManager navigationManager;
+    private List<BlogPost> blogPostCache = new();
+    private readonly BlogPostSummaryService blogPostSummaryService;
 
-		public BlogPostService(HttpClient http,
-			NavigationManager navigationManager,
-			BlogPostSummaryService blogPostSummaryService)
-		{
-			ArgumentNullException.ThrowIfNull(http, nameof(http));
-			ArgumentNullException.ThrowIfNull(navigationManager, nameof(navigationManager));
-			ArgumentNullException.ThrowIfNull(blogPostSummaryService, nameof(blogPostSummaryService));
+    public BlogPostService(
+        HttpClient http,
+        NavigationManager navigationManager,
+        BlogPostSummaryService blogPostSummaryService)
+    {
+        ArgumentNullException.ThrowIfNull(http, nameof(http));
+        ArgumentNullException.ThrowIfNull(navigationManager, nameof(navigationManager));
+        ArgumentNullException.ThrowIfNull(blogPostSummaryService, nameof(blogPostSummaryService));
 
-			this.http = http;
-			this.navigationManager = navigationManager;
-			this.blogPostSummaryService = blogPostSummaryService;
-		}
+        this.http = http;
+        this.navigationManager = navigationManager;
+        this.blogPostSummaryService = blogPostSummaryService;
+    }
 
-		public async Task<BlogPost?> GetBlogPost(Guid blogPostId, string author)
-		{
-			BlogPost? blogPost = blogPostCache.FirstOrDefault(bp => bp.Id == blogPostId && bp.Author == author);
+    public async Task<BlogPost?> GetBlogPost(Guid blogPostId, string author)
+    {
+        BlogPost? blogPost = blogPostCache.FirstOrDefault(bp => bp.Id == blogPostId && bp.Author == author);
+        if (blogPost is null)
+        {
+            var result = await http.GetAsync($"api/blogposts/{author}/{blogPostId}");
+            if (!result.IsSuccessStatusCode)
+            {
+                navigationManager.NavigateTo("404");
+                return null;
+            }
+            blogPost = await result.Content.ReadFromJsonAsync<BlogPost>();
+            if (blogPost is null)
+            {
+                navigationManager.NavigateTo("404");
+                return null;
+            }
+            blogPostCache.Add(blogPost);
+        }
+        return blogPost;
+    }
 
-			if (blogPost is null)
-			{
-				var result = await http.GetAsync($"api/blogposts/{author}/{blogPostId}");
-				if (!result.IsSuccessStatusCode)
-				{
-					navigationManager.NavigateTo("404");
-					return null;
-				}
+    public async Task<BlogPost> Create(BlogPost blogPost)
+    {
+        ArgumentNullException.ThrowIfNull(blogPost, nameof(blogPost));
 
-				blogPost = await result.Content.ReadFromJsonAsync<BlogPost>();
-				if (blogPost is null)
-				{
-					navigationManager.NavigateTo("404");
-					return null;
-				}
+        var content = JsonSerializer.Serialize(blogPost);
+        var data = new StringContent(content, Encoding.UTF8, "application/json");
 
-				blogPostCache.Add(blogPost);
-			}
-			return blogPost;
-		}
+        var result = await http.PostAsync("api/blogposts", data);
+        result.EnsureSuccessStatusCode();
+        BlogPost? savedBlogPost = await result.Content.ReadFromJsonAsync<BlogPost>();
 
-		public async Task<BlogPost> Create(BlogPost blogPost)
-		{
-			ArgumentNullException.ThrowIfNull(blogPost, nameof(blogPost));
+        blogPostCache.Add(savedBlogPost!);
+        blogPostSummaryService.Add(savedBlogPost!);
 
-			var content = JsonSerializer.Serialize(blogPost);
-			var data = new StringContent(content, Encoding.UTF8, "application/json");
+        return savedBlogPost!;
+    }
 
-			var result = await http.PostAsync("api/blogposts", data);
-			result.EnsureSuccessStatusCode();
+    public async Task Update(BlogPost blogPost)
+    {
+        ArgumentNullException.ThrowIfNull(blogPost, nameof(blogPost));
 
-			BlogPost? savedBlogPost = await result.Content.ReadFromJsonAsync<BlogPost>();
-			blogPostCache.Add(savedBlogPost!);
-			blogPostSummaryService.Add(savedBlogPost!);
+        var content = JsonSerializer.Serialize(blogPost);
+        var data = new StringContent(content, Encoding.UTF8, "application/json");
 
+        var result = await http.PutAsync("api/blogposts", data);
+        result.EnsureSuccessStatusCode();
 
-			return savedBlogPost!;
-		}
+        int index = blogPostCache.FindIndex(bp => bp.Id == blogPost.Id && bp.Author == blogPost.Author);
 
-		public async Task Update(BlogPost blogPost)
-		{
-			ArgumentNullException.ThrowIfNull(blogPost, nameof(blogPost));
+        if (index >= 0)
+        {
+            blogPostCache[index] = blogPost;
+        }
 
-			var content = JsonSerializer.Serialize(blogPost);
-			var data = new StringContent(content, Encoding.UTF8, "application/json");
-			var result = await http.PutAsync("api/blogposts", data);
-			result.EnsureSuccessStatusCode();
+        blogPostSummaryService.Replace(blogPost);
+    }
 
-			int index = blogPostCache.FindIndex(
-				bp => bp.Id == blogPost.Id
-				&& bp.Author == blogPost.Author);
-			if (index >= 0)
-			{
-				blogPostCache[index] = blogPost;
-			}
+    public async Task Delete(Guid id, string author)
+    {
+        var result = await http.DeleteAsync($"/api/blogposts/{author}/{id}");
+        result.EnsureSuccessStatusCode();
 
-			blogPostSummaryService.Replace(blogPost);
-		}
+        var blogPost = blogPostCache.FirstOrDefault(summary => summary.Id == id && summary.Author == author);
+        if (blogPost is not null)
+        {
+            blogPostCache.Remove(blogPost);
+        }
 
-		public async Task Delete(Guid id, string author)
-		{
-			var result = await
-				http.DeleteAsync($"/api/blogposts/{author}/{id}");
-			result.EnsureSuccessStatusCode();
-
-			var blogPost = blogPostCache.FirstOrDefault(
-				summary => summary.Id == id && summary.Author == author);
-
-			if (blogPost is not null)
-			{
-				blogPostCache.Remove(blogPost);
-			}
-			blogPostSummaryService.Remove(id, author);
-		}
-	}
+        blogPostSummaryService.Remove(id, author);
+    }
 }
-

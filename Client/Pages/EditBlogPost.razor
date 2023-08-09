@@ -8,33 +8,29 @@
 <AuthorizeView Roles="admin">
     <Authorized>
         @if (blogPost is null)
-{
-                <div> Loading...</div>
-}
-else
-{
-                <EditForm Model="blogPost"
-                          OnInvalidSubmit="Save"
-                          Context="EditContext">
+        {
+            <div>Loading...</div>
+        }
+        else
+        {
+            <EditForm Model="blogPost" OnValidSubmit="Save" Context="EditContext">
+                <div>
+                    <label>Title</label>
+                    <div><InputText @bind-Value=blogPost.Title /></div>
+                </div>
+                <div>
+                    <label>Tags</label>
+                    <div><InputText @bind-Value=tags /></div>
+                </div>
+                <div>
+                    <label>Post</label>
                     <div>
-                        <label>Title</label>
-                        <div><InputText @bind-Value=blogPost.Title /></div>
+                        <InputTextArea @bind-Value=blogPost.BlogPostMarkdown style=" width: 100%; height: 60vh; min-height: 100px;" />
                     </div>
-                    <div>
-                        <label>Tags</label>
-                        <div><InputText @bind-Value=tags /></div>
-                    </div>
-                    <div>
-                        <label>Post</label>
-                        <div>
-                            <InputTextArea
-                                           @bind-Value=blogPost.BlogPostMarkdown
-                                           style="width: 100%; height: 60vh; min-height: 100px;" />
-                        </div>
-                    </div>
-                    <button type="submit">Save</button>
-                </EditForm>
-}
+                </div>
+                <button type="submit">Save</button>
+            </EditForm>
+        }
     </Authorized>
 </AuthorizeView>
 
@@ -58,6 +54,7 @@ else
             blogPost = new();
             return;
         }
+
         ArgumentNullException.ThrowIfNull(Author, nameof(Author));
         if (!Guid.TryParse(Id, out Guid id))
         {
@@ -71,23 +68,24 @@ else
     private string[] CleanTags(string[] tags)
     {
         return tags.ToList()
-            .Select(tag => tag.Trim())
-            .Where(tag => !string.IsNullOrWhiteSpace(tag))
-            .ToArray();
+        .Select(tag => tag.Trim())
+        .Where(tag => !string.IsNullOrWhiteSpace(tag))
+        .ToArray();
     }
 
     private async void Save()
     {
         blogPost!.Tags = CleanTags(tags.Split(','));
+
         if (mode == "create")
         {
             blogPost.PublishedDate = DateTime.Now;
             blogPost = await service.Create(blogPost);
         }
         else
-    {
+        {
             await service.Update(blogPost);
-    }
+        }
 
         navigationManager.NavigateTo($"blogposts/{blogPost.Author}/{blogPost.Id}");
     }
