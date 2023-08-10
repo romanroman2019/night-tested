@@ -5,6 +5,7 @@
 @inject BlogPostService service
 @inject NavigationManager navigationManager
 
+<div class="container">
 <AuthorizeView Roles="admin">
     <Authorized>
         @if (blogPost is null)
@@ -14,25 +15,29 @@
         else
         {
             <EditForm Model="blogPost" OnValidSubmit="Save" Context="EditContext">
-                <div>
-                    <label>Title</label>
-                    <div><InputText @bind-Value=blogPost.Title /></div>
+                <div class="mb-3">
+                    <label class="form-label">Title</label>
+                    <div><InputText class="form-control" @bind-Value=blogPost.Title /></div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Tags</label>
+                    <div><InputText class="form-control" @bind-Value=tags /></div>
                 </div>
                 <div>
-                    <label>Tags</label>
-                    <div><InputText @bind-Value=tags /></div>
-                </div>
-                <div>
-                    <label>Post</label>
+                    <label class="form-label">Post</label>
                     <div>
-                        <InputTextArea @bind-Value=blogPost.BlogPostMarkdown style=" width: 100%; height: 60vh; min-height: 100px;" />
+                        <InputTextArea class="form-control" @bind-Value=blogPost.BlogPostMarkdown style=" width: 100%; height: 60vh; min-height: 100px;" />
                     </div>
                 </div>
-                <button type="submit">Save</button>
+                <div>
+                    <button class="btn btn-primary" type="submit">Save</button>
+                </div>
+                
             </EditForm>
         }
     </Authorized>
 </AuthorizeView>
+    </div>
 
 @code
 {

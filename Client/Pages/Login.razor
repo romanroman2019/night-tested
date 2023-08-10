@@ -5,7 +5,6 @@
 
     var providers = new Dictionary<string, string>
     {
-        {"aad", "Microsoft"},
         {"github", "GitHub" },
         {"twitter", "Twitter" },
         {"google", "Google" }
@@ -15,13 +14,15 @@
 
 <h1>Login</h1>
 
-<div>
-    @foreach(var provider in providers)
-{
+<div class="d-grid gap-2">
+    @foreach (var provider in providers)
+        {
             <div>
-                <a class="btn btn-block btn-lg btn-social btn-google" href="/.auth/login/@provider.Key">
-                    <span class="fab fa-fa@provider.Key"></span>
+                <a class="btn btn-lg btn-primary col-6" href="/.auth/login/@provider.Key" role="button">
+                    @*<span class="fab fa-fa@provider.Key"></span>*@
+                    <iconify-icon icon="devicon:@provider.Key"></iconify-icon>
                     Sign in with @provider.Value
+
                 </a>
             </div>
 }
