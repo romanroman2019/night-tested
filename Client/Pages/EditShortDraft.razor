@@ -1,0 +1,133 @@
+@page "/shortdrafts/{author}/{id}/edit"
+@page "/shortdrafts/{id}/edit"
+@using Microsoft.AspNetCore.Authorization
+@using Models
+@inject ShortDraftsService service
+@inject NavigationManager navigationManager
+
+<div class="container">
+<AuthorizeView Roles="admin">
+    <NotAuthorized>Not Authorized</NotAuthorized>
+    <Authorized>
+        <h3>@txtStatus Draft Reading</h3>        
+        @if (shortDraft is null)
+        {
+            <div>Loading...</div>
+        }
+        <form class="form-horizontal">
+        <EditForm Model="shortDraft" OnValidSubmit="Save" Context="EditContext">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <div class="row mb-2">
+                <label class="col-sm-1 col-form-label" for="inputDate">Date</label>
+                <div class="col-sm-9">
+                    <InputDate id="inputDate" class="form-control" @bind-Value =shortDraft.PublishedDate/>
+                </div>
+            </div>
+            <div class="row mb-2">
+                <label class="col-sm-1 col-form-label" for="inputPort">Port</label>
+                <div class="col-sm-9">
+                    <InputText id="inputPort" class="form-control" @bind-Value=shortDraft.Port />
+                </div>
+            </div>
+            <div class="mb-2 row">
+                <label class="col-form-label col-sm-1">Condition</label>
+                <div class="col-sm-9">
+                    <InputSelect class="form-select" @bind-Value=shortDraft.Condition >
+                        @foreach (var cst in Enum.GetValues(typeof(Cstatus)))
+                        {
+                            <option value="@cst">@cst</option>
+                        }
+                    </InputSelect>
+                </div>
+            </div>
+            <div class="col-sm-10">        
+                <table class="table">
+                    <thead>
+                        <th scope="col"></th>
+                        <th scope="col">Fwd</th>
+                        <th scope="col">Aft</th>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Observed</td>
+                            <td><InputNumber id="obsFdw" class="form-control" @bind-Value=shortDraft.ObservedFwd /></td>
+                            <td><InputNumber id="obsAft" class="form-control" @bind-Value=shortDraft.ObservedAft /></td>
+                        </tr>
+                        <tr>
+                            <td>Loadmaster</td>
+                            <td><InputNumber id="ldsFdw" class="form-control" @bind-Value=shortDraft.LoadmasterFwd /></td>
+                            <td><InputNumber id="ldsAft" class="form-control" @bind-Value=shortDraft.LoadmasterAft /></td>
+                        </tr>
+                        <tr>
+                            <td>Draft Sensors</td>
+                            <td><InputNumber id="senFdw" class="form-control" @bind-Value=shortDraft.SensorFwd /></td>
+                            <td><InputNumber id="senAft" class="form-control" @bind-Value=shortDraft.SensorAft/></td>
+                        </tr>                    
+                    </tbody>
+                </table>
+            </div>
+            <div class="mt-3">
+                <button class="btn btn-primary" type="submit" disabled="@(!EditContext.IsModified() || !EditContext.Validate())">Save</button>
+            </div>
+        </EditForm>
+        </form>
+    </Authorized>
+</AuthorizeView>
+</div>
+
+@code
+{
+    private ShortDraft? shortDraft;
+    private string mode = "edit";
+    private string txtStatus="Edit";
+
+    [Parameter]
+    public string? Id { get; set; }
+
+    [Parameter]
+    public string? Author { get; set; }
+
+    public enum Cstatus
+    {
+        Loaded,
+        Ballast,
+        Other
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Id == "new")
+        {
+            mode = "create";
+            txtStatus="New";
+            shortDraft = new();
+            shortDraft.PublishedDate = DateTime.Now;
+            return;
+        }
+
+        ArgumentNullException.ThrowIfNull(Author, nameof(Author));
+        if (!Guid.TryParse(Id, out Guid id))
+        {
+            throw new InvalidCastException();
+        }
+
+        shortDraft = await service.GetShortDraftNow(id, Author);
+    }
+
+    private async void Save()
+    {
+        if (mode == "create")
+        {
+            shortDraft.PublishedDate = DateTime.Now;
+            shortDraft = await service.Create(shortDraft);
+
+        }
+        else
+        {
+            await service.Update(shortDraft);
+        }
+
+        navigationManager.NavigateTo($"shortdrafts");
+    }
+}

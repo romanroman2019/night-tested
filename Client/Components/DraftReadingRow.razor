@@ -1,0 +1,20 @@
+﻿@using Models
+
+<div class="row">
+    <div>@DraftType</div>
+    <div class="col">
+        <div class="form-label">Fwd:</div>
+        <div></div>
+    </div>
+</div>
+
+
+@code {
+    [Parameter]
+    public DraftReading draftReading { get; set; }
+
+    [Parameter]
+    public string DraftType { get; set; }
+
+}
+

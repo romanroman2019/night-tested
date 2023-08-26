@@ -1,0 +1,70 @@
+﻿@page "/shortdrafts"
+@inject ShortDraftsService service
+@inject NavigationManager navigationManager 
+@using Models
+
+<PageTitle>Draft Readings</PageTitle>
+
+<div class="d-grid">
+
+@if (service.Summaries is null)
+{
+        <div>Loading....</div>
+    }
+    else
+    {
+       <AuthorizeView Roles="admin">
+            <Authorized>
+                <div><a class="btn btn-success" href="shortdrafts/new/edit" role="button">Create New</a></div>
+            </Authorized>
+        </AuthorizeView>
+        <TableWidget Title = "Latest draft readings" Items="@ListDrafts" TItem="ShortDraft">
+            <HeaderTemplate>
+                <th scope="col">Date</th>
+                <th scope="col">Port</th>
+                <th scope="col">Fwd</th>
+                <th scope="col">Aft</th>
+                <th scope="col"></th>
+            </HeaderTemplate>
+            <RowTemplate>
+                <td>@context.PublishedDate.ToString("dd/MM/yy hh:mm")</td>
+                <td>@context.Port</td>
+                <td>@context.ObservedFwd</td>
+                <td>@context.ObservedAft</td>
+                <td>
+                    <AuthorizeView Roles="admin">
+                        <Authorized Context="authorized_context">
+                            <button type="button" class="btn btn-primary" @onclick="()=> Navigate(context.Id, context.Author)">Edit</button>
+                            <button type="button" class="btn btn-danger">Delete</button>
+                        </Authorized>
+                    </AuthorizeView>
+                </td>
+            </RowTemplate>
+        </TableWidget>
+    }
+    </div>
+
+@code {
+
+    public List<ShortDraft> ListDrafts = new();
+    protected override async Task OnInitializedAsync()
+    {
+        await service.LoadShortDrafts();
+        IOrderedEnumerable<ShortDraft> SummaryDrafts = service.Summaries.OrderByDescending(bps=>bps.PublishedDate);
+        ListDrafts = SummaryDrafts.ToList();
+    }
+
+    void Navigate(Guid id, string author) =>
+        navigationManager.NavigateTo($"/shortdrafts/{author}/{id}/edit");
+
+    string PowerFormatter(DateTime mydate)
+    {
+        string outDate = "";
+        var inLineDate = mydate.ToString("d");
+        outDate = inLineDate.ToString();
+        return outDate;
+    
+    }
+
+}
+

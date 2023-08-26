@@ -1,0 +1,120 @@
+﻿@page "/draftreadings/{author}/{id}/edit"
+@page "/draftreadings/{id}/edit"
+@using Microsoft.AspNetCore.Authorization
+@using Models
+@inject DraftReadingService service
+@inject NavigationManager navigationManager
+
+<AuthorizeView Roles="admin">
+    <Authorized>
+        @if(draftReading is null)
+{
+                <div>Loading...</div>
+}
+else
+{ <h3>Draft Readings edit/new</h3>
+        <div>Date: @DateTime.Now</div>
+        <EditForm Model="draftReading" OnValidSubmit="Save" Context="EditContext">
+            @*<div class="mb-3">
+            <label class="form-label">Date</label>
+            <div>
+                <InputDate class="form-control" @bind-Value="draftReading.DatePublished" />
+            </div>
+        </div>*@
+            <div class="mb-3">
+                <label class="form-label">Port</label>
+                <div><InputText class="form-control" @bind-Value=draftReading.Port /></div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Condition</label>
+                <div><InputText class="form-control" @bind-Value=draftReading.Condition /></div>
+            </div>
+            <div class="row gap-2">
+                <div>Observed draft:</div>
+                <div class="col">
+                    <div class="form-label">Fwd</div>
+                    <div><InputNumber class="form-control" @bind-Value=draftReading.ObservedFwd /></div>
+                </div>
+                <div class="col">
+                    <div class="form-label">Aft</div>
+                    <div><InputNumber class="form-control" @bind-Value=draftReading.ObservedAft /></div>
+                </div>
+            </div>
+            <div class="row">
+                <div>Calculated(Loadmaster) draft:</div>
+                <div class="col">
+                    <div class="form-label">Fwd</div>
+                    <div><InputNumber class="form-control" @bind-Value=draftReading.LoadmasterFwd /></div>
+                </div>
+                <div class="col">
+                    <div class="form-label">Aft</div>
+                    <div><InputNumber class="form-control" @bind-Value=draftReading.LoadmasterAft /></div>
+                </div>
+            </div>
+            <div class="row">
+                <div>Sensor draft:</div>
+                <div class="col">
+                    <div class="form-label">Fwd</div>
+                    <div><InputNumber class="form-control" @bind-Value=draftReading.SensorFwd /></div>
+                </div>
+                <div class="col">
+                    <div class="form-label">Aft</div>
+                    <div><InputNumber class="form-control" @bind-Value=draftReading.SensorAft /></div>
+                </div>
+            </div>
+            <div class="row">
+                <label class="from-label">Corrective cargo</label>
+                <div><InputText class="form-control" @bind-Value=@draftReading.CorCargo /></div>
+            </div>
+            <button class="btn btn-primary" type="submit">Save</button>
+        </EditForm>
+}
+    </Authorized>
+</AuthorizeView>
+
+@code {
+    private DraftReading? draftReading;
+    private string mode = "edit";
+
+    [Parameter]
+    public string? Id { get; set; }
+
+    [Parameter]
+    public string? Author { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Id == "new")
+        {
+            mode = "create";
+            draftReading = new();
+            return;
+        }
+
+        ArgumentNullException.ThrowIfNull(Author, nameof(Author));
+        if(!Guid.TryParse(Id, out Guid id))
+        {
+            throw new InvalidCastException();
+        }
+        draftReading = await service.GetDraftReading(id, Author);
+
+    }
+
+    private async void Save()
+    {
+        if (mode == "create")
+        {
+            draftReading.DatePublished = DateTime.Now;
+            //draftReading = await service.Create(draftReading);
+            Console.WriteLine($"{draftReading.Author.ToString()}");
+        }
+        else
+        {
+
+        }
+        navigationManager.NavigateTo($"draftreadings");
+    }
+
+
+}
+

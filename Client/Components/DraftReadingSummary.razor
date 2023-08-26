@@ -1,0 +1,26 @@
+﻿@using Models
+@inject NavigationManager navigationManager
+
+
+<div class="row">
+    <div class="col">
+        @Summary.DatePublished
+    </div>
+    <div class="col">
+        @Summary.Port
+    </div>
+    <div class="col">
+        @Summary.Condition
+    </div>
+</div>
+
+@code {
+
+    [Parameter]
+    public DraftReading Summary { get; set; }
+
+    void Navigate() => navigationManager
+        .NavigateTo($"/draftreadings/{Summary.Author}/{Summary.Id}");
+
+}
+

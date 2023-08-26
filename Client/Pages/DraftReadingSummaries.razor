@@ -1,0 +1,32 @@
+﻿@page "/draftreadings"
+@inject DraftReadingSummaryService service
+
+<PageTitle>Draft Readings</PageTitle>
+<AuthorizeView Roles="admin">
+    <Authorized>
+        <a href="draftreadings/new/edit">Create</a>
+    </Authorized>
+</AuthorizeView>
+
+<h3>Draft Readings</h3>
+
+@if (service.DraftSummaries is null)
+{
+        <div>Loading...</div>
+    }
+    else
+    {
+        foreach (var draftReadingSummary in service.DraftSummaries.OrderByDescending(drs => drs.DatePublished))
+    {
+            <DraftReadingSummary Summary="@draftReadingSummary" />
+    }
+    }
+
+@code {
+    protected override async Task OnInitializedAsync()
+{
+        await service.LoadDraftReadingSummaries();
+}
+
+}
+
